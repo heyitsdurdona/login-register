@@ -1,4 +1,5 @@
 import { validator } from "./utils.js";
+import { login } from "./requests.js";
 
 // window.addEventListener("load", function(){
 //     const user = null;
@@ -19,25 +20,37 @@ function showToast(type, message) {
         toast.classList.add("hidden");
     }, 3000);
 }
-
+ 
 
 const elForm = document.getElementById('form');
 
-elForm.addEventListener('submit', function(evt){
+elForm.addEventListener('submit', async function(evt) {
     evt.preventDefault();
-     
+    
     const formData = new FormData(evt.target);
-    const result = {};
-    for(const [key, value] of formData.entries()){
-        result[key] = value;
-    }
+    const username = formData.get('username');
+    const password = formData.get('password');
 
-    const error = validator(result);
-    if (error) {
-        showToast("danger", error.message);
-        evt.target[error.target].focus();
+    if (!username || !password) {
+        showToast("danger", "Iltimos, barcha maydonlarni to'ldiring!");
         return;
     }
-    showToast("success", "Muvaffaqiyatli tizimga kirdingiz!");
+    
+    try {        
+        const response = await login(username, password);
+        
+        if (response) {
+            localStorage.setItem('user', JSON.stringify(response));
+            showToast("success", "Muvaffaqiyatli tizimga kirdingiz!");
+            setTimeout(() => {
+                window.location.href = "/index.html";
+            }, 1000);
+        } else {
+            showToast("danger", "Foydalanuvchi topilmadi yoki noto'g'ri maxfiy so'z");
+        }
+    } catch (error) {
+        showToast("danger", error.message);
+    } 
+
     evt.target.reset();
 });
